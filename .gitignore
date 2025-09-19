@@ -1,0 +1,20 @@
+# Ambiente Virtual
+venv/
+.venv/
+
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Arquivos de configuração de IDEs/Editores
+.vscode/
+.idea/
+
+# Arquivos de dependências do Poetry
+poetry.lock
+.pypoetry.toml
+
+# Arquivos .env para variáveis de ambiente
+.env
