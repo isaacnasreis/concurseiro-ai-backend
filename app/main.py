@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from .schemas import QuestaoRequest, QuestaoResponse
+from .services.ia_service import gerar_questao_ia
 
 app = FastAPI(
     title="ConcurseiroAI API",
@@ -28,14 +29,16 @@ async def gerar_questao(request: QuestaoRequest):
     """
     print(f"Recebido pedido para gerar questão de {request.materia} sobre {request.topico}.")
 
-    return QuestaoResponse(
-        enunciado=f"Qual é a principal característica dos Atos Administrativos no tópico de {request.topico}?",
-        alternativas=[
-            "Alternativa A",
-            "Alternativa B",
-            "Alternativa C",
-            "Alternativa D"
-        ],
-        resposta_correta="Alternativa A",
-        comentarios="Este é um comentário explicando a resposta correta."
+    resultado_ia = await gerar_questao_ia(
+        materia=request.materia,
+        topico=request.topico,
+        nivel=request.nivel_dificuldade
     )
+
+    if not resultado_ia:
+        raise HTTPException(
+            status_code=500, 
+            detail="Ocorreu um erro ao gerar a questão com a IA. Tente novamente."
+        )
+
+    return resultado_ia
