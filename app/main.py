@@ -48,7 +48,8 @@ async def gerar_questao(request: QuestaoRequest):
     resultado_ia = await gerar_questao_ia(
         materia=request.materia,
         topico=request.topico,
-        nivel=request.nivel_dificuldade
+        nivel=request.nivel_dificuldade,
+        contexto=request.contexto 
     )
 
     if not resultado_ia:

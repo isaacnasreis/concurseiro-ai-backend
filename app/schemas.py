@@ -1,6 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 class NivelDificuldade(str, Enum):
     facil = "Fácil"
@@ -25,6 +25,10 @@ class QuestaoRequest(BaseModel):
     nivel_dificuldade: NivelDificuldade = Field(
         default=NivelDificuldade.medio,
         description="O nível de dificuldade desejado para a questão."
+    )
+    contexto: Optional[str] = Field(
+        default=None, 
+        description="Um trecho de texto (material de estudo) para basear a questão."
     )
 
 class QuestaoResponse(BaseModel):
