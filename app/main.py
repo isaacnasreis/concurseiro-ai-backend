@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from .schemas import QuestaoRequest, QuestaoResponse
 from .services.ia_service import gerar_questao_ia
@@ -37,6 +37,25 @@ async def get_status():
     Endpoint para verificar o status da API.
     """
     return {"status": "ok", "message": "API está funcionando corretamente."}
+
+@app.post("/extrair-contexto-arquivo/")
+async def extrair_contexto_arquivo(arquivo: UploadFile = File(...)):
+    """
+    Recebe um arquivo (.txt), lê seu conteúdo e o retorna como uma string.
+    """
+    # Verificamos se o arquivo é um .txt para segurança básica
+    if not arquivo.filename.endswith(".txt"):
+        raise HTTPException(status_code=400, detail="Formato de arquivo inválido. Por favor, envie um arquivo .txt")
+
+    try:
+        # Lê o conteúdo do arquivo como bytes
+        conteudo_bytes = await arquivo.read()
+        # Decodifica os bytes para uma string
+        conteudo_texto = conteudo_bytes.decode("utf-8")
+        
+        return {"contexto": conteudo_texto, "nome_arquivo": arquivo.filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Não foi possível processar o arquivo: {e}")
 
 @app.post("/gerar-questao", response_model=QuestaoResponse)
 async def gerar_questao(request: QuestaoRequest):
