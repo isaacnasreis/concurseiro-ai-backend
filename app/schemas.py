@@ -1,6 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, Field
 from typing import List, Optional
+import asyncio
 
 class NivelDificuldade(str, Enum):
     facil = "Fácil"
@@ -43,3 +44,18 @@ class QuestaoResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class SimuladoRequest(BaseModel):
+    """
+    Define os parâmetros para a geração de um simulado completo.
+    """
+    materia: str = Field(...)
+    topico: str = Field(...)
+    nivel_dificuldade: NivelDificuldade = Field(...)
+    quantidade_questoes: int = Field(
+        ..., 
+        gt=0, # gt=0 significa "greater than 0" (maior que 0)
+        le=10, # le=10 significa "less than or equal to 10" (menor ou igual a 10) - um limite para não sobrecarregar a API
+        description="Número de questões para o simulado."
+    )
+    contexto: Optional[str] = Field(default=None)

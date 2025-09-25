@@ -2,7 +2,8 @@ import os
 import google.generativeai as genai
 import json
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Optional, List, Dict
+import asyncio
 
 load_dotenv()
 
@@ -57,7 +58,7 @@ def criar_prompt(materia: str, topico: str, nivel: str, contexto: Optional[str] 
 
     return prompt_final + prompt_formato_saida
 
-async def gerar_questao_ia(materia: str, topico: str, nivel: str, contexto: Optional[str] = None):
+async def gerar_questao_ia(materia: str, topico: str, nivel: str, contexto: Optional[str] = None) -> Optional[Dict]:
     """
     Chama a API do Gemini para gerar uma questão e garante que a saída seja um JSON válido.
     """
@@ -76,3 +77,18 @@ async def gerar_questao_ia(materia: str, topico: str, nivel: str, contexto: Opti
         print(f"Erro ao gerar ou processar a questão da IA: {e}")
         print(f"Resposta recebida da IA: {response.text if 'response' in locals() else 'Nenhuma resposta recebida'}")
         return None
+
+async def gerar_simulado_ia(materia: str, topico: str, nivel: str, quantidade: int, contexto: Optional[str] = None) -> List[Dict]:
+    """
+    Gera uma lista de questões de forma concorrente.
+    """
+    tarefas = [
+        gerar_questao_ia(materia, topico, nivel, contexto)
+        for _ in range(quantidade)
+    ]
+
+    resultados = await asyncio.gather(*tarefas)
+
+    questoes_validas = [q for q in resultados if q is not None]
+    
+    return questoes_validas

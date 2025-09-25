@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import fitz
-from .schemas import QuestaoRequest, QuestaoResponse
-from .services.ia_service import gerar_questao_ia
+from .schemas import QuestaoRequest, QuestaoResponse, SimuladoRequest
+from .services.ia_service import gerar_questao_ia, gerar_simulado_ia
+from typing import List
 
 app = FastAPI(
     title="ConcurseiroAI API",
@@ -90,3 +91,26 @@ async def gerar_questao(request: QuestaoRequest):
         )
 
     return resultado_ia
+
+@app.post("/gerar-simulado", response_model=List[QuestaoResponse])
+async def gerar_simulado_endpoint(request: SimuladoRequest):
+    """
+    Recebe os parâmetros e gera um simulado completo com várias questões.
+    """
+    print(f"Iniciando geração de simulado com {request.quantidade_questoes} questões.")
+
+    questoes = await gerar_simulado_ia(
+        materia=request.materia,
+        topico=request.topico,
+        nivel=request.nivel_dificuldade.value,
+        quantidade=request.quantidade_questoes,
+        contexto=request.contexto
+    )
+
+    if not questoes or len(questoes) < request.quantidade_questoes:
+        raise HTTPException(
+            status_code=500,
+            detail=f"A IA conseguiu gerar apenas {len(questoes)} de {request.quantidade_questoes} questões. Tente novamente."
+        )
+
+    return questoes
