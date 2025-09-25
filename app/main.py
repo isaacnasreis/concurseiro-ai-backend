@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+import fitz
 from .schemas import QuestaoRequest, QuestaoResponse
 from .services.ia_service import gerar_questao_ia
 
@@ -41,19 +42,30 @@ async def get_status():
 @app.post("/extrair-contexto-arquivo/")
 async def extrair_contexto_arquivo(arquivo: UploadFile = File(...)):
     """
-    Recebe um arquivo (.txt), lê seu conteúdo e o retorna como uma string.
+    Recebe um arquivo (.txt ou .pdf), lê seu conteúdo e o retorna como uma string.
     """
-    # Verificamos se o arquivo é um .txt para segurança básica
-    if not arquivo.filename.endswith(".txt"):
-        raise HTTPException(status_code=400, detail="Formato de arquivo inválido. Por favor, envie um arquivo .txt")
+    filename = arquivo.filename
+    conteudo_texto = ""
+
+    conteudo_bytes = await arquivo.read()
 
     try:
-        # Lê o conteúdo do arquivo como bytes
-        conteudo_bytes = await arquivo.read()
-        # Decodifica os bytes para uma string
-        conteudo_texto = conteudo_bytes.decode("utf-8")
+        if filename.endswith(".txt"):
+            conteudo_texto = conteudo_bytes.decode("utf-8")
         
-        return {"contexto": conteudo_texto, "nome_arquivo": arquivo.filename}
+        elif filename.endswith(".pdf"):
+            with fitz.open(stream=conteudo_bytes, filetype="pdf") as doc:
+                for page in doc:
+                    conteudo_texto += page.get_text()
+        
+        else:
+            raise HTTPException(
+                status_code=400, 
+                detail="Formato de arquivo inválido. Por favor, envie um .txt ou .pdf"
+            )
+            
+        return {"contexto": conteudo_texto, "nome_arquivo": filename}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Não foi possível processar o arquivo: {e}")
 
