@@ -92,3 +92,31 @@ async def gerar_simulado_ia(materia: str, topico: str, nivel: str, quantidade: i
     questoes_validas = [q for q in resultados if q is not None]
     
     return questoes_validas
+
+async def simplificar_texto_ia(texto: str, comando: str) -> Optional[Dict]:
+    """
+    Usa a IA para processar um texto com base em um comando específico.
+    """
+    if not model:
+        raise ConnectionError("A configuração da API do Gemini falhou.")
+
+    prompt = f"""
+    Aja como um tutor especialista em concursos públicos com excelente didática.
+    Sua tarefa é reprocessar o texto fornecido abaixo de acordo com o comando do usuário.
+    Seja claro, objetivo e use uma linguagem acessível.
+
+    --- COMANDO DO USUÁRIO ---
+    {comando}
+
+    --- TEXTO ORIGINAL ---
+    {texto}
+
+    --- RESULTADO ---
+    """
+    
+    try:
+        response = model.generate_content(prompt)
+        return {"texto_processado": response.text}
+    except Exception as e:
+        print(f"Erro ao processar texto com a IA: {e}")
+        return None

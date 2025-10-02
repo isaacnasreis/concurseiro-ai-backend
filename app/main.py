@@ -1,8 +1,13 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import fitz
-from .schemas import QuestaoRequest, QuestaoResponse, SimuladoRequest
-from .services.ia_service import gerar_questao_ia, gerar_simulado_ia
+from .schemas import (
+    QuestaoRequest, QuestaoResponse, SimuladoRequest, 
+    SimplificadorRequest, SimplificadorResponse
+)
+from .services.ia_service import (
+    gerar_questao_ia, gerar_simulado_ia, simplificar_texto_ia
+)
 from typing import List
 
 app = FastAPI(
@@ -114,3 +119,21 @@ async def gerar_simulado_endpoint(request: SimuladoRequest):
         )
 
     return questoes
+
+@app.post("/simplificar-texto", response_model=SimplificadorResponse)
+async def simplificar_texto_endpoint(request: SimplificadorRequest):
+    """
+    Recebe um texto e um comando, e retorna o texto processado pela IA.
+    """
+    resultado = await simplificar_texto_ia(
+        texto=request.texto_original, 
+        comando=request.comando
+    )
+
+    if not resultado:
+        raise HTTPException(
+            status_code=500,
+            detail="Ocorreu um erro ao processar o texto com a IA."
+        )
+    
+    return resultado

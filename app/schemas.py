@@ -59,3 +59,13 @@ class SimuladoRequest(BaseModel):
         description="Número de questões para o simulado."
     )
     contexto: Optional[str] = Field(default=None)
+
+class SimplificadorRequest(BaseModel):
+    texto_original: str = Field(..., description="O texto a ser processado pela IA.")
+    comando: str = Field(
+        default="Explique este texto em termos simples para um iniciante em concursos.",
+        description="A instrução para a IA sobre como transformar o texto."
+    )
+
+class SimplificadorResponse(BaseModel):
+    texto_processado: str = Field(..., description="O texto resultante após o processamento da IA.")
