@@ -9,7 +9,7 @@ load_dotenv()
 
 try:
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 except Exception as e:
     print(f"Erro ao configurar a API do Gemini: {e}")
     model = None
