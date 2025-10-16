@@ -3,17 +3,33 @@ from fastapi.middleware.cors import CORSMiddleware
 import fitz
 from .schemas import (
     QuestaoRequest, QuestaoResponse, SimuladoRequest, 
-    SimplificadorRequest, SimplificadorResponse
+    SimplificadorRequest, SimplificadorResponse, ResultadoSimuladoRequest
 )
 from .services.ia_service import (
     gerar_questao_ia, gerar_simulado_ia, simplificar_texto_ia
 )
 from typing import List
+from . import models, crud
+from .database import engine, SessionLocal
+import asyncio
+from contextlib import asynccontextmanager
+
+async def create_db_and_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(models.Base.metadata.create_all)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Código a ser executado na inicialização
+    await create_db_and_tables()
+    yield
+    # Código a ser executado na finalização (se necessário)
 
 app = FastAPI(
     title="ConcurseiroAI API",
     description="API para gerar questões de concursos públicos utilizando IA.",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 # --- CONFIGURAÇÃO DO CORS ---
@@ -30,6 +46,13 @@ app.add_middleware(
     allow_headers=["*"],    # Permite todos os cabeçalhos
 )
 # --- FIM DA CONFIGURAÇÃO DO CORS ---
+
+async def get_db():
+    async with SessionLocal() as session:
+        yield session
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends
 
 @app.get("/")
 async def read_root():
@@ -137,3 +160,14 @@ async def simplificar_texto_endpoint(request: SimplificadorRequest):
         )
     
     return resultado
+
+@app.post("/salvar-simulado/")
+async def salvar_simulado(
+    resultado: ResultadoSimuladoRequest, 
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Recebe os resultados de um simulado concluído e salva no banco de dados.
+    """
+    await crud.salvar_resultado_simulado(db=db, resultado=resultado)
+    return {"status": "Resultados salvos com sucesso!"}

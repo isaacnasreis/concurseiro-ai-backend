@@ -69,3 +69,13 @@ class SimplificadorRequest(BaseModel):
 
 class SimplificadorResponse(BaseModel):
     texto_processado: str = Field(..., description="O texto resultante após o processamento da IA.")
+
+class QuestaoResultado(BaseModel):
+    enunciado: str
+    resposta_correta: str
+    resposta_usuario: Optional[str]
+
+class ResultadoSimuladoRequest(BaseModel):
+    materia: str
+    topico: str
+    questoes: List[QuestaoResultado]
