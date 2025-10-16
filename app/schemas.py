@@ -79,3 +79,14 @@ class ResultadoSimuladoRequest(BaseModel):
     materia: str
     topico: str
     questoes: List[QuestaoResultado]
+
+class MentorRequest(BaseModel):
+    materia: str
+    topico: str
+    sub_topico: Optional[str] = None 
+
+class MentorResponse(BaseModel):
+    explicacao_simples: str
+    pontos_chave: List[str]
+    como_cai_em_prova: str
+    questao_exemplo: QuestaoResponse

@@ -3,10 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import fitz
 from .schemas import (
     QuestaoRequest, QuestaoResponse, SimuladoRequest, 
-    SimplificadorRequest, SimplificadorResponse, ResultadoSimuladoRequest
+    SimplificadorRequest, SimplificadorResponse, ResultadoSimuladoRequest, MentorRequest, MentorResponse
 )
 from .services.ia_service import (
-    gerar_questao_ia, gerar_simulado_ia, simplificar_texto_ia
+    gerar_questao_ia, gerar_simulado_ia, simplificar_texto_ia, gerar_plano_de_aula_ia
 )
 from typing import List
 from . import models, crud
@@ -171,3 +171,22 @@ async def salvar_simulado(
     """
     await crud.salvar_resultado_simulado(db=db, resultado=resultado)
     return {"status": "Resultados salvos com sucesso!"}
+
+@app.post("/gerar-plano-de-aula", response_model=MentorResponse)
+async def gerar_plano_de_aula_endpoint(request: MentorRequest):
+    """
+    Recebe uma matéria/tópico e gera um plano de aula didático com a IA.
+    """
+    plano_de_aula = await gerar_plano_de_aula_ia(
+        materia=request.materia,
+        topico=request.topico,
+        sub_topico=request.sub_topico
+    )
+
+    if not plano_de_aula:
+        raise HTTPException(
+            status_code=500,
+            detail="Ocorreu um erro ao gerar o plano de aula com a IA."
+        )
+    
+    return plano_de_aula

@@ -120,3 +120,49 @@ async def simplificar_texto_ia(texto: str, comando: str) -> Optional[Dict]:
     except Exception as e:
         print(f"Erro ao processar texto com a IA: {e}")
         return None
+    
+async def gerar_plano_de_aula_ia(materia: str, topico: str, sub_topico: Optional[str] = None) -> Optional[Dict]:
+    """
+    Gera um plano de aula estruturado sobre um tópico específico.
+    """
+    if not model:
+        raise ConnectionError("A configuração da API do Gemini falhou.")
+
+    topico_completo = f"{topico}: {sub_topico}" if sub_topico else topico
+
+    prompt = f"""
+    Aja como um mentor experiente para concursos públicos, especialista na matéria de '{materia}'.
+    Sua tarefa é criar um mini plano de aula sobre o tópico específico: '{topico_completo}'.
+    O público-alvo é um estudante para o cargo de Analista de Sistemas da Prefeitura de Contagem-MG.
+    Seja didático, direto ao ponto e focado no que realmente importa para a prova.
+
+    Retorne sua resposta ESTRITAMENTE no seguinte formato JSON, sem nenhum texto ou formatação adicional:
+    {{
+      "explicacao_simples": "Uma explicação clara e concisa do conceito, como se estivesse explicando para um colega.",
+      "pontos_chave": [
+        "Um ponto crucial ou palavra-chave para memorizar.",
+        "Outro ponto importante que costuma ser pegadinha.",
+        "Um terceiro ponto essencial."
+      ],
+      "como_cai_em_prova": "Descreva como este tópico é tipicamente cobrado em provas de concurso para a área de TI, mencionando o estilo de bancas como FGV, Cesgranrio, etc.",
+      "questao_exemplo": {{
+        "enunciado": "Crie aqui um enunciado de uma questão de múltipla escolha (4 alternativas) sobre o tópico.",
+        "alternativas": [
+          "Texto da alternativa A.",
+          "Texto da alternativa B.",
+          "Texto da alternativa C.",
+          "Texto da alternativa D."
+        ],
+        "resposta_correta": "O texto exato de uma das alternativas acima.",
+        "comentarios": "Um breve comentário explicando por que a resposta está correta."
+      }}
+    }}
+    """
+
+    try:
+        response = model.generate_content(prompt)
+        cleaned_response_text = response.text.strip().replace("```json", "").replace("```", "").strip()
+        return json.loads(cleaned_response_text)
+    except Exception as e:
+        print(f"Erro ao gerar plano de aula: {e}\nResposta recebida: {response.text if 'response' in locals() else 'N/A'}")
+        return None
