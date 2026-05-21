@@ -1,5 +1,5 @@
 import os
-import google.generativeai as genai
+from google import genai
 import json
 from dotenv import load_dotenv
 from typing import Optional, List, Dict
@@ -8,12 +8,12 @@ import asyncio
 load_dotenv()
 
 try:
-    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-    # Atualizado para o modelo mais avançado de raciocínio (gemini-2.5-pro)
-    model = genai.GenerativeModel('gemini-2.5-pro')
+    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+    # Usando o modelo Pro para maior capacidade de raciocínio
+    MODEL_ID = 'gemini-2.5-pro'
 except Exception as e:
     print(f"Erro ao configurar a API do Gemini: {e}")
-    model = None
+    client = None
 
 def criar_prompt(materia: str, topico: str, nivel: str, contexto: Optional[str] = None) -> str:
     """Monta o prompt detalhado para a IA, adaptando-o se um contexto for fornecido."""
@@ -63,13 +63,13 @@ async def gerar_questao_ia(materia: str, topico: str, nivel: str, contexto: Opti
     """
     Chama a API do Gemini para gerar uma questão e garante que a saída seja um JSON válido.
     """
-    if not model:
+    if not client:
         raise ConnectionError("A configuração da API do Gemini falhou. Verifique a API Key.")
 
     prompt = criar_prompt(materia, topico, nivel, contexto)
     
     try:
-        response = await asyncio.to_thread(model.generate_content, prompt)
+        response = await asyncio.to_thread(client.models.generate_content, model=MODEL_ID, contents=prompt)
         
         cleaned_response_text = response.text.strip().replace("```json", "").replace("```", "").strip()
         
@@ -128,13 +128,13 @@ async def gerar_simulado_ia(materia: str, topico: str, nivel: str, quantidade: i
     """
     Gera uma lista de questões em uma única chamada de API (otimizado e livre de rate limit).
     """
-    if not model:
+    if not client:
         raise ConnectionError("A configuração da API do Gemini falhou.")
 
     prompt = criar_prompt_simulado(materia, topico, nivel, quantidade, contexto)
     
     try:
-        response = await asyncio.to_thread(model.generate_content, prompt)
+        response = await asyncio.to_thread(client.models.generate_content, model=MODEL_ID, contents=prompt)
         cleaned_response_text = response.text.strip().replace("```json", "").replace("```", "").strip()
         questoes = json.loads(cleaned_response_text)
         
@@ -152,7 +152,7 @@ async def simplificar_texto_ia(texto: str, comando: str) -> Optional[Dict]:
     """
     Usa a IA para processar um texto com base em um comando específico.
     """
-    if not model:
+    if not client:
         raise ConnectionError("A configuração da API do Gemini falhou.")
 
     prompt = f"""
@@ -170,7 +170,7 @@ async def simplificar_texto_ia(texto: str, comando: str) -> Optional[Dict]:
     """
     
     try:
-        response = await asyncio.to_thread(model.generate_content, prompt)
+        response = await asyncio.to_thread(client.models.generate_content, model=MODEL_ID, contents=prompt)
         return {"texto_processado": response.text}
     except Exception as e:
         print(f"Erro ao processar texto com a IA: {e}")
@@ -180,7 +180,7 @@ async def gerar_plano_de_aula_ia(materia: str, topico: str, sub_topico: Optional
     """
     Gera um plano de aula estruturado sobre um tópico específico.
     """
-    if not model:
+    if not client:
         raise ConnectionError("A configuração da API do Gemini falhou.")
 
     topico_completo = f"{topico}: {sub_topico}" if sub_topico else topico
@@ -215,7 +215,7 @@ async def gerar_plano_de_aula_ia(materia: str, topico: str, sub_topico: Optional
     """
 
     try:
-        response = await asyncio.to_thread(model.generate_content, prompt)
+        response = await asyncio.to_thread(client.models.generate_content, model=MODEL_ID, contents=prompt)
         cleaned_response_text = response.text.strip().replace("```json", "").replace("```", "").strip()
         return json.loads(cleaned_response_text)
     except Exception as e:

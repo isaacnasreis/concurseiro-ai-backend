@@ -1,5 +1,5 @@
 import os
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,13 +9,13 @@ if not api_key:
     print("GOOGLE_API_KEY não encontrada no arquivo .env")
     exit(1)
 
-genai.configure(api_key=api_key)
+client = genai.Client(api_key=api_key)
 
 print("Modelos disponíveis:")
 print("-" * 50)
 try:
-    for m in genai.list_models():
-        if 'generateContent' in m.supported_generation_methods:
+    for m in client.models.list():
+        if 'generateContent' in m.supported_actions:
             print(f"Nome: {m.name}")
             print(f"Descrição: {m.description}")
             print("-" * 50)
