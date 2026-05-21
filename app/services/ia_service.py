@@ -68,7 +68,7 @@ async def gerar_questao_ia(materia: str, topico: str, nivel: str, contexto: Opti
     prompt = criar_prompt(materia, topico, nivel, contexto)
     
     try:
-        response = await model.generate_content_async(prompt)
+        response = await asyncio.to_thread(model.generate_content, prompt)
         
         cleaned_response_text = response.text.strip().replace("```json", "").replace("```", "").strip()
         
@@ -115,7 +115,7 @@ async def simplificar_texto_ia(texto: str, comando: str) -> Optional[Dict]:
     """
     
     try:
-        response = await model.generate_content_async(prompt)
+        response = await asyncio.to_thread(model.generate_content, prompt)
         return {"texto_processado": response.text}
     except Exception as e:
         print(f"Erro ao processar texto com a IA: {e}")
@@ -160,7 +160,7 @@ async def gerar_plano_de_aula_ia(materia: str, topico: str, sub_topico: Optional
     """
 
     try:
-        response = await model.generate_content_async(prompt)
+        response = await asyncio.to_thread(model.generate_content, prompt)
         cleaned_response_text = response.text.strip().replace("```json", "").replace("```", "").strip()
         return json.loads(cleaned_response_text)
     except Exception as e:
