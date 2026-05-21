@@ -78,20 +78,74 @@ async def gerar_questao_ia(materia: str, topico: str, nivel: str, contexto: Opti
         print(f"Resposta recebida da IA: {response.text if 'response' in locals() else 'Nenhuma resposta recebida'}")
         return None
 
-async def gerar_simulado_ia(materia: str, topico: str, nivel: str, quantidade: int, contexto: Optional[str] = None) -> List[Dict]:
+def criar_prompt_simulado(materia: str, topico: str, nivel: str, quantidade: int, contexto: Optional[str] = None) -> str:
+    prompt_base = f"""
+    Aja como um especialista em elaboração de questões para concursos públicos no Brasil.
+    Seu objetivo é criar {quantidade} questões inéditas de múltipla escolha (4 alternativas cada) sobre a matéria '{materia}', 
+    focadas no tópico específico '{topico}', com um nível de dificuldade '{nivel}'.
     """
-    Gera uma lista de questões de forma concorrente.
+    
+    if contexto:
+        prompt_contexto = f"""
+
+    As questões DEVEM ser elaboradas utilizando EXCLUSIVAMENTE o seguinte texto de contexto fornecido. Não utilize nenhum conhecimento externo a este texto.
+
+    --- TEXTO DE CONTEXTO ---
+    {contexto}
+    --- FIM DO TEXTO DE CONTEXTO ---
     """
-    tarefas = [
-        gerar_questao_ia(materia, topico, nivel, contexto)
-        for _ in range(quantidade)
+        prompt_final = prompt_base + prompt_contexto
+    else:
+        prompt_final = prompt_base
+
+    prompt_formato_saida = """
+
+    Você DEVE retornar a resposta ESTRITAMENTE como um ARRAY JSON contendo os objetos das questões.
+    Exemplo do formato de saída:
+    [
+      {
+        "enunciado": "O enunciado da questão 1 aqui.",
+        "alternativas": ["A1", "A2", "A3", "A4"],
+        "resposta_correta": "A1",
+        "comentarios": "Por que a A1 está correta."
+      },
+      {
+        "enunciado": "O enunciado da questão 2 aqui.",
+        "alternativas": ["B1", "B2", "B3", "B4"],
+        "resposta_correta": "B2",
+        "comentarios": "Por que a B2 está correta."
+      }
     ]
 
-    resultados = await asyncio.gather(*tarefas)
+    Certifique-se de que o campo "resposta_correta" contenha o texto exato de uma das opções listadas em "alternativas".
+    Retorne APENAS o array JSON válido, sem NENHUM texto antes ou depois, e sem marcações markdown como ```json.
+    """
 
-    questoes_validas = [q for q in resultados if q is not None]
+    return prompt_final + prompt_formato_saida
+
+async def gerar_simulado_ia(materia: str, topico: str, nivel: str, quantidade: int, contexto: Optional[str] = None) -> List[Dict]:
+    """
+    Gera uma lista de questões em uma única chamada de API (otimizado e livre de rate limit).
+    """
+    if not model:
+        raise ConnectionError("A configuração da API do Gemini falhou.")
+
+    prompt = criar_prompt_simulado(materia, topico, nivel, quantidade, contexto)
     
-    return questoes_validas
+    try:
+        response = await asyncio.to_thread(model.generate_content, prompt)
+        cleaned_response_text = response.text.strip().replace("```json", "").replace("```", "").strip()
+        questoes = json.loads(cleaned_response_text)
+        
+        if isinstance(questoes, list):
+            return questoes
+        else:
+            print("Erro: A IA não retornou uma lista.")
+            return []
+    except Exception as e:
+        print(f"Erro ao gerar o simulado com a IA: {e}")
+        print(f"Resposta recebida da IA: {response.text if 'response' in locals() else 'Nenhuma resposta recebida'}")
+        return []
 
 async def simplificar_texto_ia(texto: str, comando: str) -> Optional[Dict]:
     """
