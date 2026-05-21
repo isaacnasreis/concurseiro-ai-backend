@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, case
 from . import models, schemas
 
 async def salvar_resultado_simulado(db: AsyncSession, resultado: schemas.ResultadoSimuladoRequest):
@@ -23,3 +24,29 @@ async def salvar_resultado_simulado(db: AsyncSession, resultado: schemas.Resulta
     
     await db.commit()
     return db_simulado
+
+async def get_estatisticas_por_session(db: AsyncSession, session_id: str):
+    stmt_simulados = select(func.count(models.Simulado.id)).where(models.Simulado.session_id == session_id)
+    result_simulados = await db.execute(stmt_simulados)
+    simulados_count = result_simulados.scalar_one_or_none() or 0
+
+    stmt_questoes = select(
+        func.count(models.QuestaoRespondida.id),
+        func.sum(case((models.QuestaoRespondida.acertou == 'sim', 1), else_=0))
+    ).select_from(models.Simulado).join(models.QuestaoRespondida).where(models.Simulado.session_id == session_id)
+    
+    result_questoes = await db.execute(stmt_questoes)
+    questoes_count, acertos_count = result_questoes.one_or_none() or (0, 0)
+    
+    if acertos_count is None:
+        acertos_count = 0
+
+    taxa_acerto = 0
+    if questoes_count > 0:
+        taxa_acerto = int((acertos_count / questoes_count) * 100)
+
+    return {
+        "simuladosRealizados": simulados_count,
+        "questoesRespondidas": questoes_count,
+        "taxaAcerto": taxa_acerto
+    }

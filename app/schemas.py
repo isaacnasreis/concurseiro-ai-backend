@@ -91,3 +91,8 @@ class MentorResponse(BaseModel):
     pontos_chave: List[str]
     como_cai_em_prova: str
     questao_exemplo: QuestaoResponse
+
+class EstatisticasResponse(BaseModel):
+    simuladosRealizados: int
+    questoesRespondidas: int
+    taxaAcerto: int
