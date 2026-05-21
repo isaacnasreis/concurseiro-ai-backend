@@ -4,7 +4,8 @@ from . import models, schemas
 async def salvar_resultado_simulado(db: AsyncSession, resultado: schemas.ResultadoSimuladoRequest):
     db_simulado = models.Simulado(
         materia=resultado.materia,
-        topico=resultado.topico
+        topico=resultado.topico,
+        session_id=resultado.session_id
     )
     db.add(db_simulado)
     await db.commit()

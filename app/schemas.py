@@ -78,6 +78,7 @@ class QuestaoResultado(BaseModel):
 class ResultadoSimuladoRequest(BaseModel):
     materia: str
     topico: str
+    session_id: Optional[str] = None
     questoes: List[QuestaoResultado]
 
 class MentorRequest(BaseModel):

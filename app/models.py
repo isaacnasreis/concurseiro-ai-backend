@@ -9,6 +9,7 @@ class Simulado(Base):
     id = Column(Integer, primary_key=True, index=True)
     materia = Column(String, index=True)
     topico = Column(String)
+    session_id = Column(String, index=True, nullable=True) # Para rastreamento de usuário local
     data_realizacao = Column(DateTime, default=datetime.datetime.utcnow)
     
     questoes = relationship("QuestaoRespondida", back_populates="simulado")
