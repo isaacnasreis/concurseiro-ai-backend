@@ -9,9 +9,9 @@ load_dotenv()
 
 try:
     client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-    # O modelo gemini-2.5-pro não está disponível na sua cota gratuita (limit: 0).
-    # Revertendo para o modelo gemini-2.5-flash que possui cota generosa.
-    MODEL_ID = 'gemini-2.5-flash'
+    # O modelo gemini-3.5-flash é a versão mais avançada do flash e possui 
+    # cota generosa no plano gratuito, diferente dos 2.5 que estão limitados.
+    MODEL_ID = 'gemini-3.5-flash'
 except Exception as e:
     print(f"Erro ao configurar a API do Gemini: {e}")
     client = None
