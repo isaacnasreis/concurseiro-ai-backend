@@ -9,8 +9,9 @@ load_dotenv()
 
 try:
     client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-    # Usando o modelo Pro para maior capacidade de raciocínio
-    MODEL_ID = 'gemini-2.5-pro'
+    # O modelo gemini-2.5-pro não está disponível na sua cota gratuita (limit: 0).
+    # Revertendo para o modelo gemini-2.5-flash que possui cota generosa.
+    MODEL_ID = 'gemini-2.5-flash'
 except Exception as e:
     print(f"Erro ao configurar a API do Gemini: {e}")
     client = None
